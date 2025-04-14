@@ -104,28 +104,3 @@ async def face_verify_student_images(
     except Exception as e:
         
         raise HTTPException(status_code=400, detail=str(e))
-    
-    
-# @router.post("/verify")
-# async def face_verify(
-#     img1: Optional[UploadFile] = File(None),
-#     img2: Optional[UploadFile] = File(None),
-#     img1_path: Optional[str] = Form(None),
-#     img2_path: Optional[str] = Form(None),
-#     model_name: str = Form("Facenet"),
-#     detector_backend: str = Form("ssd"),
-#     distance_metric: str = Form("cosine"),
-#     enforce_detection: bool = Form(True),
-#     align: bool = Form(True),
-#     anti_spoofing: bool = Form(False),
-# ):
-#     return verify(
-#         img1=img1 or img1_path,
-#         img2=img2 or img2_path,
-#         model_name=model_name,
-#         detector_backend=detector_backend,
-#         distance_metric=distance_metric,
-#         enforce_detection=enforce_detection,
-#         align=align,
-#         anti_spoofing=anti_spoofing,
-#     )

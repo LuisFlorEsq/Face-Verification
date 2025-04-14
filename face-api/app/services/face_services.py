@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import requests
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Dict, Any
 
 from fastapi import UploadFile, HTTPException
 from starlette.datastructures import UploadFile
@@ -21,7 +21,7 @@ def load_image(image: Union[UploadFile, str]) -> np.ndarray:
         _np.ndarray_: The loaded image as a NumPy array (BGR format).
     """
     
-    print(f"[DEBUG] load_image got: {type(image)}")
+    # print(f"[DEBUG] load_image got: {type(image)}")
 
     # UploadFile (direct image upload)
     if isinstance(image, UploadFile):
@@ -37,7 +37,7 @@ def load_image(image: Union[UploadFile, str]) -> np.ndarray:
     # Url or file path
     elif isinstance(image, str):
         
-        print(f"[DEBUG] load image got a string: {image}")
+        # print(f"[DEBUG] load image got a string: {image}")
         
         if image.startswith("http"):
             
@@ -86,7 +86,21 @@ def represent_student(
     align: bool = True,
     anti_spoofing: bool = False,
     max_faces: Optional[int] = None
-):
+) -> Union[List[Dict[str, Any]], List[List[Dict[str, Any]]]]:
+    """
+    Get the face embeddings for the given image.
+
+    Args:
+        img (Union[UploadFile, str]): Image can be a file path, URL or UploadFile object.
+        model_name (str, optional): The face recognition model to generate embeddings. Defaults to "VGG-Face".
+        detector_backend (str, optional): Face detection model. Defaults to "opencv".
+        enforce_detection (bool, optional): Perform face detection before obtain embedding. Defaults to True.
+        align (bool, optional): Align the detected face. Defaults to True.
+
+    Returns:
+        results (List[Dict[str, Any]] or List[Dict[str, Any]]): A list of dictionaries.
+        Result type becomes List of List of Dict if batch input passed.
+    """
     
     try:
         
@@ -120,6 +134,22 @@ def verify_student(
     enforce_detection: bool = True,
     align: bool = True
 ):
+    """
+    Verify if two images or embeddings are of the same person (student) based on the selected face recognition model and distance metric.
+
+    Args:
+        reference (Union[UploadFile, str, List[float], dict, list]): Image or precomputed embedding of the reference person.
+        test (Union[UploadFile, str, List[float], dict, list]): Image or precomputed embedding of the test person.
+        model_name (str, optional): Face recognition model. Defaults to "VGG-Face".
+        detector_backend (str, optional): Face detection model. Defaults to "opencv".
+        distance_metric (str, optional): Distance metric used to calculate the similarity. Defaults to "cosine".
+        enforce_detection (bool, optional): Perform face detection before compute the embeddings. Defaults to True.
+        align (bool, optional): Align the detected faces. Defaults to True
+
+    Returns:
+        _type_: _description_
+    """
+    
     try:
         def preprocess_input(input_data):
             if isinstance(input_data, (UploadFile, str)):
@@ -162,30 +192,3 @@ def verify_student(
         import traceback
         tb_str = traceback.format_exc()
         raise HTTPException(status_code=400, detail=f"Exception while verifying: {str(err)}\n{tb_str}")
-
-# def verify(img1, img2, model_name="VGG-Face", detector_backend="opencv", distance_metric="cosine", enforce_detection=True, align=True, anti_spoofing=False):
-    
-#     try:
-        
-#         image1 = load_image(img1)
-#         image2 = load_image(img2)
-        
-#         verification = DeepFace.verify(
-#             img1_path=image1,
-#             img2_path=image2,
-#             model_name=model_name,
-#             detector_backend=detector_backend,
-#             distance_metric=distance_metric,
-#             align=align,
-#             enforce_detection=enforce_detection,
-#             anti_spoofing=anti_spoofing,
-#         )
-        
-#         return verification
-    
-#     except Exception as err:
-        
-#         import traceback
-#         tb_str = traceback.format_exc()
-        
-#         raise HTTPException(status_code=400, detail=f"Exception while verifying: {str(err)}\n{tb_str}")

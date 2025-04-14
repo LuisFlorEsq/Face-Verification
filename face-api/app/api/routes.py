@@ -1,17 +1,29 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Body
-from typing import Optional, List, Literal
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
+from typing import Optional, List, Literal, Union
+from pydantic import BaseModel
 
-from app.services.face_services import represent, verify
-from app.utils.similarity import cosine_distance, euclidean_distance
+import numpy as np
+from app.services.face_services import represent_student, verify_student, verify
+
 
 router = APIRouter()
 
-@router.post("/represent")
-async def face_represent(
+class VerifyRequest(BaseModel):
+    reference: Union[str, List[float], dict, list]
+    test: Union[str, List[float], dict, list]
+    model_name: str = "VGG-Face"
+    detector_backend: str = "opencv"
+    distance_metric: str = "cosine"
+    enforce_detection: bool = True
+    align: bool = True
+    
+
+@router.post("/represent_student")
+async def face_represent_student(
     img: Optional[UploadFile] = File(None),
     img_path: Optional[str] = Form(None),
-    model_name: str = Form("VGG-Face"),
-    detector_backend: str = Form("opencv"),
+    model_name: str = Form("Facenet"),
+    detector_backend: str = Form("ssd"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True),
     anti_spoofing: bool = Form(False),
@@ -24,7 +36,7 @@ async def face_represent(
         
         raise HTTPException(status_code=400, detail="Either 'img' or 'img_path' must be provided.")
     
-    return represent(
+    return represent_student(
         img=img_input,
         model_name=model_name,
         detector_backend=detector_backend,
@@ -33,49 +45,87 @@ async def face_represent(
         anti_spoofing=anti_spoofing,
         max_faces=max_faces,
     )
+    
 
-@router.post("/compare-embeddings")
-async def compare_embeddings(
-    embedding1: List[float] = Body(..., embed=True),
-    embedding2: List[float] = Body(..., embed=True),
-    metric: Literal["cosine", "euclidean", "manhattan"] = Body("cosine", embed=True)
+@router.post("/verify_student")
+async def face_verify_student(
+    request: VerifyRequest,
 ):
-    if len(embedding1) != len(embedding2):
-        raise HTTPException(status_code=400, detail="Embeddings must be the same length")
-
     try:
-        if metric == "cosine":
-            score = cosine_distance(embedding1, embedding2)
-        elif metric == "euclidean":
-            score = euclidean_distance(embedding1, embedding2)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid metric")
-
-        return {"metric": metric, "score": score}
-
+        # print(f"[DEBUG] Received request: {request}")
+        
+        result = verify_student(
+            reference=request.reference,
+            test=request.test,
+            model_name=request.model_name,
+            detector_backend=request.detector_backend,
+            distance_metric=request.distance_metric,
+            enforce_detection=request.enforce_detection,
+            align=request.align
+        )
+        
+        return result
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/verify")
-async def face_verify(
-    img1: Optional[UploadFile] = File(None),
-    img2: Optional[UploadFile] = File(None),
-    img1_path: Optional[str] = Form(None),
-    img2_path: Optional[str] = Form(None),
+
+@router.post("/verify_student_images")
+async def face_verify_student_images(
+    reference: Optional[UploadFile] = File(None),
+    reference_path: Optional[str] = Form(None),
+    test: Optional[UploadFile] = File(None),
+    test_path: Optional[str] = Form(None),
     model_name: str = Form("VGG-Face"),
     detector_backend: str = Form("opencv"),
     distance_metric: str = Form("cosine"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True),
-    anti_spoofing: bool = Form(False),
 ):
-    return verify(
-        img1=img1 or img1_path,
-        img2=img2 or img2_path,
-        model_name=model_name,
-        detector_backend=detector_backend,
-        distance_metric=distance_metric,
-        enforce_detection=enforce_detection,
-        align=align,
-        anti_spoofing=anti_spoofing,
-    )
+    try:
+        reference_input = reference if reference is not None else reference_path
+        test_input = test if test is not None else test_path
+        if reference_input is None or test_input is None:
+            raise HTTPException(status_code=400, detail="Both reference and test inputs must be provided.")
+
+        result = verify_student(
+            reference=reference_input,
+            test=test_input,
+            model_name=model_name,
+            detector_backend=detector_backend,
+            distance_metric=distance_metric,
+            enforce_detection=enforce_detection,
+            align=align
+        )
+        
+        return result
+    
+    except Exception as e:
+        
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    
+# @router.post("/verify")
+# async def face_verify(
+#     img1: Optional[UploadFile] = File(None),
+#     img2: Optional[UploadFile] = File(None),
+#     img1_path: Optional[str] = Form(None),
+#     img2_path: Optional[str] = Form(None),
+#     model_name: str = Form("Facenet"),
+#     detector_backend: str = Form("ssd"),
+#     distance_metric: str = Form("cosine"),
+#     enforce_detection: bool = Form(True),
+#     align: bool = Form(True),
+#     anti_spoofing: bool = Form(False),
+# ):
+#     return verify(
+#         img1=img1 or img1_path,
+#         img2=img2 or img2_path,
+#         model_name=model_name,
+#         detector_backend=detector_backend,
+#         distance_metric=distance_metric,
+#         enforce_detection=enforce_detection,
+#         align=align,
+#         anti_spoofing=anti_spoofing,
+#     )

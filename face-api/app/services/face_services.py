@@ -9,6 +9,22 @@ from starlette.datastructures import UploadFile
 from deepface import DeepFace
 from app.utils.verification import verify
 
+# Chroma DB imports
+
+import chromadb
+from chromadb.utils import embedding_functions
+import os
+
+# Chroma DB initialization
+
+CHROMA_PATH = os.getenv("CHROMA_PERSISTENT_PATH", "./students_db")
+chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+embedding_function = embedding_functions.DefaultEmbeddingFunction()
+collection = chroma_client.get_or_create_collection(
+    name="student_embeddings",
+    embedding_function=embedding_function
+)
+
 
 def load_image(image: Union[UploadFile, str]) -> np.ndarray:
     """
@@ -123,6 +139,142 @@ def represent_student(
         tb_str = traceback.format_exc()
         
         raise HTTPException(status_code=400, detail=f"Exception while representing: {str(err)}\n{tb_str}")
+
+
+def register_student(
+    student_id: str,
+    name: str,
+    img: Union[UploadFile, str],
+    model_name: str = "Facenet",
+    detector_backend: str = "ssd",
+    enforce_detection: bool = True,
+    algin: bool = True
+) -> Dict[str, Any]:
+    """
+    Register a student by storing their face embedding in ChromaDB.
+
+    Args:
+        student_id (str): The current student ID to be enrolled.
+        name (str): The name of the student.
+        img (Union[UploadFile, str]): The reference image of the student, can be a file path, URL or UploadFile object.
+        model_name (str, optional): Embedding generation model. Defaults to "Facenet".
+        detector_backend (str, optional): Face detection model. Defaults to "ssd".
+        enforce_detection (bool, optional): Ensure to detect a face before embedding generation. Defaults to True.
+        algin (bool, optional): Align the detected face before embedding generation. Defaults to True.
+
+    Returns:
+        Dict[str, Any]: Registration status and details.
+    """
+    
+    try:
+        
+        # Check if student_id already exists in the database
+        
+        existing_student = collection.get(ids=[student_id])
+        
+        if existing_student["ids"]:
+            raise HTTPException(status_code=400, detail="Student ID already exists.")
+        
+        # Generate embedding
+        
+        embedding_obj = represent_student(
+            img=img,
+            model_name=model_name,
+            detector_backend=detector_backend,
+            enforce_detection=enforce_detection,
+            align=algin
+        )
+        
+        embedding = embedding_obj["results"][0]["embedding"]
+        
+        # Store the embedding in ChromaDB
+        
+        collection.add(
+            embeddings=[embedding],
+            metadatas=[{"student_id": student_id, "name": name}],
+            ids=[student_id]
+            
+        )
+        
+        return {
+            "message": f"Student {name} registered successfully.", 
+            "student_id": student_id
+        }
+        
+    
+    except Exception as err:
+        
+        import traceback
+        tb_str = traceback.format_exc()
+        raise HTTPException(status_code=400, detail=f"Exception while registeing: {str(err)}\n{tb_str}")
+    
+
+def search_verify_student(
+    student_id: str,
+    reference_img: Union[UploadFile, str],
+    model_name: str = "Facenet",
+    detector_backend: str = "ssd",
+    distance_metric: str = "cosine",
+    enforce_detection: bool = True,
+    align: bool = True,
+) -> Dict[str, Any]:
+    """
+    Search for a student's embedding in the database and verify it against a reference image.
+
+    Args:
+        student_id (str): The student ID to search for.
+        reference_img (Union[UploadFile, str]): The reference image to verify against.
+        model_name (str, optional): Embedding generation model. Defaults to "Facenet".
+        detector_backend (str, optional): Face detection model. Defaults to "ssd".
+        enfoce_detection (bool, optional): Ensure to detect a face before embedding generation. Defaults to True.
+        align (bool, optional): Align the detected face before embedding generation. Defaults to True.
+
+    Returns:
+        Dict[str, Any]: Verification result including distance and status.
+    """
+    
+    try:
+        
+        # Generate embedding for the reference image
+        embedding_obj = represent_student(
+            img=reference_img,
+            model_name=model_name, 
+            detector_backend=detector_backend,
+            enforce_detection=enforce_detection,
+            align=align
+        )
+        
+        test_embedding = embedding_obj["results"][0]["embedding"]
+        
+        # Query ChromaDB for the stored embedding of the student
+        results = collection.query(
+            query_embeddings=[test_embedding],
+            n_results=1,
+            where={"student_id": student_id}
+        )
+        
+        if not results["ids"]:
+            
+            raise HTTPException(status_code=404, detail="Student ID not found.")
+        
+        # Verify both embeddings
+        
+        return verify(
+            img1_path=results["embeddings"][0],
+            img2_path=test_embedding,
+            model_name=model_name,
+            detector_backend=detector_backend,
+            distance_metric=distance_metric,
+            enforce_detection=enforce_detection,
+            align=align  
+        )
+        
+    
+    except Exception as err:
+        
+        import traceback
+        tb_str = traceback.format_exc()
+        raise HTTPException(status_code=400, detail=f"Exception while verifying: {str(err)}\n{tb_str}")
 
 
 def verify_student(

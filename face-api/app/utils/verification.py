@@ -34,27 +34,16 @@ def verify(
 
     Args:
         img1_path (Union[str, np.ndarray, List[float]]): Path to the first image or a precomputed embedding.
-        
         img2_path (Union[str, np.ndarray, List[float]]): Path to the second image or a precomputed embedding.
-        
         model_name (str, optional): Model used to embedding generation. Defaults to "VGG-Face".
-        
         detector_backend (str, optional): Face detection backend. Defaults to "opencv".
-        
         distance_metric (str, optional): Metric to measure the similarity. Defaults to "cosine".
-        
         enforce_detection (bool, optional): When no face is detected it raises an exception. Defaults to True.
-        
         align (bool, optional): Face alignment. Defaults to True.
-        
         expand_percentage (int, optional): Expand detected facial area. Defaults to 0.
-        
         normalization (str, optional): Normalize the image input before feed it to the model. Defaults to "base".
-        
         silent (bool, optional): Suppress or allow logg messages. Defaults to False.
-        
         threshold (Optional[float], optional): The threshold used to determine if a pair represent the same person or not. Defaults to None.
-        
         anti_spoofing (bool, optional): Anti-spoofing validation. Defaults to False.
 
     Returns:

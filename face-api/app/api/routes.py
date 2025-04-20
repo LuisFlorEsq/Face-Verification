@@ -20,7 +20,8 @@ class VerifyRequest(BaseModel):
 class RegisterRequest(BaseModel):
     student_id: str
     name: str
-    img: Union[str, List[float]] = None
+    img: Optional[UploadFile] = None
+    img_path: Optional[str] = None
     model_name: str = "Facenet"
     detector_backend: str = "ssd"
     enforce_detection: bool = True
@@ -58,24 +59,31 @@ async def face_represent_student(
 
 @router.post("/register_student")
 async def face_register_student(
-    # student_id: str = Form(...),
-    # name: str = Form(...),
-    # img = Optional[UploadFile] = File(None),
-    # img_path: Optional[str] = Form(None),
-    # model_name: str = Form("Facenet"),
-    # detector_backend: str = Form("ssd"),
-    # enforce_detection: bool = Form(True)
-    request: RegisterRequest,
+    student_id: str = Form(...),
+    name: str = Form(...),
+    img: Optional[UploadFile] = File(None),
+    img_path: Optional[str] = Form(None),
+    model_name: str = Form("Facenet"),
+    detector_backend: str = Form("ssd"),
+    enforce_detection: bool = Form(True),
+    align: bool = Form(True)
 ):
     
+    # Check if either img or img_path is provided
+    if img is None and img_path is None:
+        raise HTTPException(status_code=400, detail="Either 'img' or 'img_path' must be provided.")
+    
+    # Img input can be either an UploadFile or a file path
+    img_input = img if img is not None else img_path
+    
     return register_student(
-        student_id=request.student_id,
-        name=request.name,
-        img=request.img,
-        model_name=request.model_name,
-        detector_backend=request.detector_backend,
-        enforce_detection=request.enforce_detection,
-        align=request.align
+        student_id=student_id,
+        name=name,
+        img=img_input,
+        model_name=model_name,
+        detector_backend=detector_backend,
+        enforce_detection=enforce_detection,
+        align=align
     )
     
 @router.post("/search_verify_student")

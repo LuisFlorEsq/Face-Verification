@@ -37,7 +37,7 @@ def load_image(image: Union[UploadFile, str]) -> np.ndarray:
         _np.ndarray_: The loaded image as a NumPy array (BGR format).
     """
     
-    # print(f"[DEBUG] load_image got: {type(image)}")
+    print(f"[DEBUG] load_image got: {type(image)}")
 
     # UploadFile (direct image upload)
     if isinstance(image, UploadFile):
@@ -148,7 +148,7 @@ def register_student(
     model_name: str = "Facenet",
     detector_backend: str = "ssd",
     enforce_detection: bool = True,
-    algin: bool = True
+    align: bool = True
 ) -> Dict[str, Any]:
     """
     Register a student by storing their face embedding in ChromaDB.
@@ -175,17 +175,22 @@ def register_student(
         if existing_student["ids"]:
             raise HTTPException(status_code=400, detail="Student ID already exists.")
         
-        # Generate embedding
         
-        embedding_obj = represent_student(
-            img=img,
+        # Generate embedding
+        image = load_image(img)
+        
+        embedding_obj = DeepFace.represent(
+            img_path=image,
             model_name=model_name,
             detector_backend=detector_backend,
             enforce_detection=enforce_detection,
-            align=algin
+            align=align
         )
         
-        embedding = embedding_obj["results"][0]["embedding"]
+        # print(f"[DEBUG]: Embedding object", embedding_obj)
+        # print(f"[DEBUG]: Embedding", embedding_obj[0]["embedding"])
+        
+        embedding = embedding_obj[0]["embedding"]
         
         # Store the embedding in ChromaDB
         
@@ -235,33 +240,31 @@ def search_verify_student(
     
     try:
         
-        # Generate embedding for the reference image
-        embedding_obj = represent_student(
-            img=reference_img,
-            model_name=model_name, 
-            detector_backend=detector_backend,
-            enforce_detection=enforce_detection,
-            align=align
-        )
-        
-        test_embedding = embedding_obj["results"][0]["embedding"]
+        reference_img = load_image(reference_img)
         
         # Query ChromaDB for the stored embedding of the student
-        results = collection.query(
-            query_embeddings=[test_embedding],
-            n_results=1,
-            where={"student_id": student_id}
+        results = collection.get(
+            ids=[student_id],
+            include=["metadatas","embeddings"]
         )
+        
+        # print(f"[DEBUG] Search results: {results}")
         
         if not results["ids"]:
             
             raise HTTPException(status_code=404, detail="Student ID not found.")
         
+        reference_embedding = results["embeddings"][0].tolist()
+        
+        # print(f"[DEBUG] Reference embedding: {reference_embedding}")
+        # print(f"[DEBUG] Format type: {type(reference_embedding)}")
+        
+        
         # Verify both embeddings
         
         return verify(
-            img1_path=results["embeddings"][0],
-            img2_path=test_embedding,
+            img1_path=reference_embedding,
+            img2_path=reference_img,
             model_name=model_name,
             detector_backend=detector_backend,
             distance_metric=distance_metric,

@@ -59,7 +59,7 @@ face-api/*.log
 face-api/docker-volumes/
 
 # New Directory (ignore entirely)
-stuff/
+# stuff/
 
 # VS Code
 .vscode/

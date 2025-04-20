@@ -1,0 +1,135 @@
+# Python (for face-api)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Anaconda (for face-api)
+.conda/
+conda-bld/
+miniconda/
+anaconda/
+*.conda
+.conda_lock.yml
+environment.yml
+conda-meta/
+
+# Virtual Environments
+venv/
+env/
+.virtualenv/
+*.venv
+*.env
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.production
+*.env
+
+# ChromaDB Storage (for face-api)
+face-api/student_embeddings/
+face-api/students_db
+face-api/chroma_data/
+face-api/*.chroma
+face-api/chromadb/
+
+# DeepFace and ML Models (for face-api)
+face-api/*.h5
+face-api/*.pb
+face-api/*.tflite
+face-api/*.onnx
+face-api/model_weights/
+face-api/pretrained_models/
+
+# Docker (for face-api)
+face-api/docker-compose.yml
+face-api/*.dockerignore
+face-api/Dockerfile.local
+face-api/*.log
+face-api/docker-volumes/
+
+# New Directory (ignore entirely)
+stuff/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# IDEs and Editors
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Testing and Coverage
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+tox.ini
+.nox/
+
+# Logs
+*.log
+logs/
+*.log.*
+log/
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*~
+.#*
+*.bak
+*.backup
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Build Artifacts
+dist/
+build/
+out/
+target/
+
+# Miscellaneous
+*.pkl
+*.pickle
+*.csv
+*.tsv
+*.jsonl
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Sensitive Data
+*.pem
+*.key
+*.crt
+*.cert
+*.secret
+secrets/
+credentials/
+config/secrets/
+
+# Local Development
+local_settings.py
+local_config.py
+*.local

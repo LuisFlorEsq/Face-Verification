@@ -1,3 +1,3 @@
-import os
+# import os
 
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
+# UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")

@@ -7,6 +7,7 @@ from fastapi import UploadFile, HTTPException
 from starlette.datastructures import UploadFile
 
 from deepface import DeepFace
+import tensorflow as tf
 from app.utils.verification import verify
 
 # Chroma DB imports
@@ -14,6 +15,10 @@ from app.utils.verification import verify
 import chromadb
 from chromadb.utils import embedding_functions
 import os
+
+# Disable GPU usage to avoid CUDA errors
+os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Disable GPU
+tf.config.set_visible_devices([], 'GPU')  # Force CPU usage
 
 # Chroma DB initialization
 

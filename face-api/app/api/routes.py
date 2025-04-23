@@ -27,7 +27,10 @@ class RegisterRequest(BaseModel):
     enforce_detection: bool = True
     align: bool = True
     
-    
+
+@router.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 @router.post("/represent_student")
 async def face_represent_student(

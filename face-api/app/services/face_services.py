@@ -36,7 +36,7 @@ collection = chroma_client.get_or_create_collection(
 
 # # Logging configuration
 # logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 def log_resources(prefix: str):
@@ -146,7 +146,7 @@ def represent_student(
         Result type becomes List of List of Dict if batch input passed.
     """
     
-    log_resources("Before represent_student")
+    # # log_resources("Before represent_student")
     
     try:
         
@@ -161,7 +161,7 @@ def represent_student(
             max_faces=1,
         )
         
-        log_resources("After represent_student")
+        # # log_resources("After represent_student")
         
         return {"results": embedding_objs}
     
@@ -198,7 +198,7 @@ def register_student(
         Dict[str, Any]: Registration status and details.
     """
     
-    log_resources("Before register_student")
+    # # log_resources("Before register_student")
     
     try:
         
@@ -235,7 +235,7 @@ def register_student(
             
         )
         
-        log_resources("After register_student")
+        # # log_resources("After register_student")
         
         return {
             "message": f"Student {name} registered successfully.", 
@@ -274,7 +274,7 @@ def search_verify_student(
         Dict[str, Any]: Verification result including distance and status.
     """
     
-    log_resources("Before search_verify_student")
+    # # log_resources("Before search_verify_student")
     
     try:
         
@@ -298,7 +298,7 @@ def search_verify_student(
         # print(f"[DEBUG] Format type: {type(reference_embedding)}")
         
         
-        log_resources("After search_verify_student")
+        # # log_resources("After search_verify_student")
         
         # Verify both embeddings
         

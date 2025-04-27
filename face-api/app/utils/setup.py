@@ -5,6 +5,7 @@ from app.routes import __name__ as routes_module
 
 import chromadb
 from chromadb.utils import embedding_functions
+from pinecone import Pinecone
 import os
 
 
@@ -45,3 +46,25 @@ def get_chroma_collection():
         name="student_embeddings",
         embedding_function=embedding_functions.DefaultEmbeddingFunction(),
     )
+    
+    
+def get_pinecone_index():
+    """
+    Initialize and return a Pinecone index for storing student embeddings.
+
+    Returns:
+        pinecone.Index: The Pinecone index object.
+    """
+    
+    api_key = os.getenv("PINECONE_API_KEY")
+    environment = os.getenv("PINECONE_ENVIRONMENT")
+    index_name = os.getenv("PINECONE_INDEX_NAME", "student-embeddings")
+
+    if not all([api_key, environment, index_name]):
+        raise ValueError("PINECONE_API_KEY, PINECONE_ENVIRONMENT, and PINECONE_INDEX_NAME must be set in environment variables.")
+
+    pc = Pinecone(api_key=api_key)
+    
+    dense_index = pc.Index(index_name)
+    
+    return dense_index

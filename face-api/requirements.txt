@@ -11,3 +11,4 @@ facenet-pytorch>=2.6.0
 torch>=2.2.2
 tf-keras==2.18.0
 psutil
+pinecone

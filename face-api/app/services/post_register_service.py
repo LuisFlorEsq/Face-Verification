@@ -2,8 +2,9 @@ from typing import Union, Dict, Any
 from fastapi import HTTPException, UploadFile
 from deepface import DeepFace
 
-from app.utils.proces_image import load_image
+from app.utils.process_image import load_image
 from app.utils.setup import get_chroma_collection
+from app.utils.setup import get_pinecone_index
 from app.schemas.register_student_schema import RegisterResponse
 
 async def register_student(
@@ -37,10 +38,10 @@ async def register_student(
         
         # Check if student_id already exists in the database
         
-        collection = get_chroma_collection()
-        existing_student = collection.get(ids=[student_id])
+        index = get_pinecone_index()
+        fetch_response = index.fetch(ids=[student_id])
         
-        if existing_student["ids"]:
+        if fetch_response.vectors and student_id in fetch_response.vectors:
             raise HTTPException(status_code=400, detail="Student ID already exists.")
         
         
@@ -60,13 +61,16 @@ async def register_student(
         
         embedding = embedding_obj[0]["embedding"]
         
-        # Store the embedding in ChromaDB
+        # Store the embedding in Pinecone
         
-        collection.add(
-            embeddings=[embedding],
-            metadatas=[{"student_id": student_id, "name": name}],
-            ids=[student_id]
-            
+        index.upsert(
+            vectors=[
+                {
+                    "id": student_id,
+                    "values": embedding,
+                    "metadata": {"student_id": student_id, "name": name}
+                }
+            ]
         )
         
         # # log_resources("After register_student")

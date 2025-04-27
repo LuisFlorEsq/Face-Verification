@@ -1,8 +1,9 @@
 from typing import Union, Dict, Any
 from fastapi import HTTPException, UploadFile
 
-from app.utils.proces_image import load_image
+from app.utils.process_image import load_image
 from app.utils.setup import get_chroma_collection
+from app.utils.setup import get_pinecone_index
 from app.utils.verification import verify
 from app.schemas.search_verify_student_schema import VerifyResponse
 
@@ -38,21 +39,18 @@ async def search_verify_student(
         # Get reference image and stored embedding
         reference_img = load_image(reference_img)
         
-        # Query ChromaDB for the stored embedding of the student
-        collection = get_chroma_collection()
+        # Fetch the stored embedding from the database
+        index = get_pinecone_index()
         
-        results = collection.get(
-            ids=[student_id],
-            include=["metadatas","embeddings"]
-        )
+        fetch_response = index.fetch(ids=[student_id])
         
-        # print(f"[DEBUG] Search results: {results}")
-        
-        if not results["ids"]:
-            
+        if not fetch_response.vectors or student_id not in fetch_response.vectors:
             raise HTTPException(status_code=404, detail="Student ID not found.")
         
-        reference_embedding = results["embeddings"][0].tolist()
+        reference_embedding = fetch_response.vectors[student_id]["values"]
+        
+        
+        # print(f"[DEBUG] Search results: {results}")
         
         # print(f"[DEBUG] Reference embedding: {reference_embedding}")
         # print(f"[DEBUG] Format type: {type(reference_embedding)}")

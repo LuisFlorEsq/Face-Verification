@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 from deepface import DeepFace
 
-from app.utils.proces_image import load_image
+from app.utils.process_image import load_image
 from app.schemas.represent_student_schema import RepresentResponse
 
 async def represent_student(

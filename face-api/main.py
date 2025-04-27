@@ -1,9 +1,12 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 import os
 
-app = FastAPI()
+from app.config.settings import Config
+
+app = FastAPI(title="Face verification API")
 
 # Adding CORS middleware to allow requests from any origin
 app.add_middleware(
@@ -19,7 +22,9 @@ app.include_router(router)
 
 
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
-    
+
+    uvicorn.run(
+        app,
+        host=Config.HOST,
+        port=Config.PORT
+    )

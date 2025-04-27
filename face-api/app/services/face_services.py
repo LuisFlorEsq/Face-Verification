@@ -16,6 +16,10 @@ import chromadb
 from chromadb.utils import embedding_functions
 import os
 
+# Memory and CPU tracing
+import logging
+import psutil
+
 # Disable GPU usage to avoid CUDA errors
 os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Disable GPU
 tf.config.set_visible_devices([], 'GPU')  # Force CPU usage
@@ -29,6 +33,25 @@ collection = chroma_client.get_or_create_collection(
     name="student_embeddings",
     embedding_function=embedding_function
 )
+
+# # Logging configuration
+# logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+def log_resources(prefix: str):
+    """
+    Log memory and CPU usage.
+
+    Args:
+        prefix (str): Prefix for the log message.
+    """
+    
+    process = psutil.Process()
+    mem_info = process.memory_info()
+    cpu_percent = process.cpu_percent(interval=0.1)
+    logger.debug(f"{prefix} - Memory Usage: {mem_info.rss / (1024**2):.2f} MB, CPU: {cpu_percent:.2f}%")
+    
 
 
 def load_image(image: Union[UploadFile, str]) -> np.ndarray:
@@ -123,6 +146,8 @@ def represent_student(
         Result type becomes List of List of Dict if batch input passed.
     """
     
+    log_resources("Before represent_student")
+    
     try:
         
         image = load_image(img)
@@ -133,8 +158,10 @@ def represent_student(
             enforce_detection=enforce_detection,
             align=align,
             anti_spoofing=anti_spoofing,
-            max_faces=max_faces,
+            max_faces=1,
         )
+        
+        log_resources("After represent_student")
         
         return {"results": embedding_objs}
     
@@ -171,6 +198,8 @@ def register_student(
         Dict[str, Any]: Registration status and details.
     """
     
+    log_resources("Before register_student")
+    
     try:
         
         # Check if student_id already exists in the database
@@ -205,6 +234,8 @@ def register_student(
             ids=[student_id]
             
         )
+        
+        log_resources("After register_student")
         
         return {
             "message": f"Student {name} registered successfully.", 
@@ -243,6 +274,8 @@ def search_verify_student(
         Dict[str, Any]: Verification result including distance and status.
     """
     
+    log_resources("Before search_verify_student")
+    
     try:
         
         reference_img = load_image(reference_img)
@@ -264,6 +297,8 @@ def search_verify_student(
         # print(f"[DEBUG] Reference embedding: {reference_embedding}")
         # print(f"[DEBUG] Format type: {type(reference_embedding)}")
         
+        
+        log_resources("After search_verify_student")
         
         # Verify both embeddings
         

@@ -11,8 +11,8 @@ router = APIRouter()
 class VerifyRequest(BaseModel):
     reference: Union[str, List[float], dict, list]
     test: Union[str, List[float], dict, list]
-    model_name: str = "VGG-Face"
-    detector_backend: str = "opencv"
+    model_name: str = "Facenet"
+    detector_backend: str = "fastmtcnn"
     distance_metric: str = "cosine"
     enforce_detection: bool = True
     align: bool = True
@@ -23,21 +23,21 @@ class RegisterRequest(BaseModel):
     img: Optional[UploadFile] = None
     img_path: Optional[str] = None
     model_name: str = "Facenet"
-    detector_backend: str = "ssd"
+    detector_backend: str = "fastmtcnn"
     enforce_detection: bool = True
     align: bool = True
     
 
 @router.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "Face API is running!"}
 
 @router.post("/represent_student")
 async def face_represent_student(
     img: Optional[UploadFile] = File(None),
     img_path: Optional[str] = Form(None),
     model_name: str = Form("Facenet"),
-    detector_backend: str = Form("ssd"),
+    detector_backend: str = Form("fastmtcnn"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True),
     anti_spoofing: bool = Form(False),
@@ -67,7 +67,7 @@ async def face_register_student(
     img: Optional[UploadFile] = File(None),
     img_path: Optional[str] = Form(None),
     model_name: str = Form("Facenet"),
-    detector_backend: str = Form("ssd"),
+    detector_backend: str = Form("fastmtcnn"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True)
 ):
@@ -95,7 +95,7 @@ async def face_search_verify_student(
     img: Optional[UploadFile] = File(None),
     img_path: Optional[str] = Form(None),
     model_name: str = Form("Facenet"),
-    detector_backend: str = Form("ssd"),
+    detector_backend: str = Form("fastmtcnn"),
     distance_metric: str = Form("cosine"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True) 
@@ -146,8 +146,8 @@ async def face_verify_student_images(
     reference_path: Optional[str] = Form(None),
     test: Optional[UploadFile] = File(None),
     test_path: Optional[str] = Form(None),
-    model_name: str = Form("VGG-Face"),
-    detector_backend: str = Form("opencv"),
+    model_name: str = Form("Facenet"),
+    detector_backend: str = Form("fastmtcnn"),
     distance_metric: str = Form("cosine"),
     enforce_detection: bool = Form(True),
     align: bool = Form(True),

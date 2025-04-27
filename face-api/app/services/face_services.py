@@ -50,7 +50,7 @@ def log_resources(prefix: str):
     process = psutil.Process()
     mem_info = process.memory_info()
     cpu_percent = process.cpu_percent(interval=0.1)
-    logger.debug(f"{prefix} - Memory Usage: {mem_info.rss / (1024**2):.2f} MB, CPU: {cpu_percent:.2f}%")
+    # logger.debug(f"{prefix} - Memory Usage: {mem_info.rss / (1024**2):.2f} MB, CPU: {cpu_percent:.2f}%")
     
 
 

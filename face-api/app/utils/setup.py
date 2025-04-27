@@ -3,6 +3,10 @@ import pkgutil
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import __name__ as routes_module
 
+import chromadb
+from chromadb.utils import embedding_functions
+import os
+
 
 def configure_middleware(app):
     """
@@ -30,3 +34,14 @@ def include_routers(app):
         
         if hasattr(module, 'router'):
             app.include_router(module.router, prefix="/api")
+            
+
+def get_chroma_collection():
+    
+    CHROMA_PATH = os.getenv("CHROMA_PERSISTENT_PATH", "./students_db")
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    
+    return client.get_or_create_collection(
+        name="student_embeddings",
+        embedding_function=embedding_functions.DefaultEmbeddingFunction(),
+    )

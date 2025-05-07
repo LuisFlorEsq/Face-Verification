@@ -123,20 +123,36 @@ def verify(
             except ValueError as err:
                 if "Face could not be detected" in str(err):
                     logger.warn(f"No face detected in img{index}_path: {str(err)}")
-                    raise HTTPException(status_code=400, detail="No face detected in image")
+                    # Return templated response instead of raising exception
+                    toc = time.time()
+                    threshold = find_threshold(model_name, distance_metric)
+                    return [{
+                        "verified": False,
+                        "distance": 999.0,  # Sentinel value for "no face detected"
+                        "threshold": threshold,
+                        "model": model_name,
+                        "detector_backend": detector_backend,
+                        "similarity_metric": distance_metric,
+                        "time": round(toc - tic, 2),
+                        "error": {
+                            "error_code": "NO_FACE_DETECTED",
+                            "message": "No face detected in the uploaded image. Please upload a clear image with a visible face.",
+                            "retryable": True
+                        }
+                    }]
                 logger.error(f"Error processing img{index}_path: {str(err)}")
                 raise HTTPException(status_code=400, detail=f"Failed to process image: {str(err)}")
             
         return img_embeddings
     
-    try:
-        img1_embeddings = extract_embeddings(img1_path, 1)
-        img2_embeddings = extract_embeddings(img2_path, 2)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in verify: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal verification error")
+    img1_embeddings = extract_embeddings(img1_path, 1)
+    img2_response = extract_embeddings(img2_path, 2)
+    
+    # Check if img2_response is a templated error response
+    if isinstance(img2_response, list) and len(img2_response) == 1 and isinstance(img2_response[0], dict) and "error" in img2_response[0]:
+        return img2_response[0]  # Return the templated response directly
+
+    img2_embeddings = img2_response  # Normal embeddings case
 
     min_distance = float("inf")
     for img1_embedding in img1_embeddings:

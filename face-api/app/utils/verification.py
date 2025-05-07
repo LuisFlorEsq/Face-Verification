@@ -6,6 +6,7 @@ import numpy as np
 from deepface.modules import representation, detection, modeling
 from deepface.models.FacialRecognition import FacialRecognition
 from deepface.commons.logger import Logger
+from fastapi import HTTPException
 
 from app.utils.similarity import find_distance, find_threshold
 
@@ -85,8 +86,9 @@ def verify(
         if isinstance(img_path, list):
             # given image is already pre-calculated embedding
             if not all(isinstance(dim, (float, int)) for dim in img_path):
-                raise ValueError(
-                    f"When passing img{index}_path as a list,"
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"When passing img{index}_path as a list,"
                     " ensure that all its items are of type float."
                 )
 
@@ -98,12 +100,14 @@ def verify(
                 )
 
             if len(img_path) != dims:
-                raise ValueError(
-                    f"embeddings of {model_name} should have {dims} dimensions,"
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"embeddings of {model_name} should have {dims} dimensions,"
                     f" but {index}-th image has {len(img_path)} dimensions input"
                 )
 
             img_embeddings = [img_path]
+            
         else:
             try:
                 img_embeddings = __extract_faces_and_embeddings(
@@ -117,12 +121,22 @@ def verify(
                     anti_spoofing=anti_spoofing,
                 )
             except ValueError as err:
-                raise ValueError(f"Exception while processing img{index}_path") from err
+                if "Face could not be detected" in str(err):
+                    logger.warn(f"No face detected in img{index}_path: {str(err)}")
+                    raise HTTPException(status_code=400, detail="No face detected in image")
+                logger.error(f"Error processing img{index}_path: {str(err)}")
+                raise HTTPException(status_code=400, detail=f"Failed to process image: {str(err)}")
             
         return img_embeddings
-
-    img1_embeddings = extract_embeddings(img1_path, 1)
-    img2_embeddings = extract_embeddings(img2_path, 2)
+    
+    try:
+        img1_embeddings = extract_embeddings(img1_path, 1)
+        img2_embeddings = extract_embeddings(img2_path, 2)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in verify: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal verification error")
 
     min_distance = float("inf")
     for img1_embedding in img1_embeddings:
@@ -131,7 +145,6 @@ def verify(
             if distance < min_distance:
                 min_distance = distance
 
-    # find the face pair with minimum distance
     threshold = threshold or find_threshold(model_name, distance_metric)
     distance = float(min_distance)
 

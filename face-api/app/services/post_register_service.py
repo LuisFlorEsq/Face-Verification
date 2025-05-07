@@ -17,7 +17,7 @@ async def register_student(
     align: bool = True
 ) -> RegisterResponse:
     """
-    Register a student by storing their face embedding in ChromaDB.
+    Register a student by storing their face embedding in Pinecone.
 
     Args:
         student_id (str): The current student ID to be enrolled.
@@ -41,7 +41,10 @@ async def register_student(
         index = get_pinecone_index()
         fetch_response = index.fetch(ids=[student_id])
         
+        # print(f"[DEBUG]: Fetch response", fetch_response)
+        
         if fetch_response.vectors and student_id in fetch_response.vectors:
+            
             raise HTTPException(status_code=400, detail="Student ID already exists.")
         
         
@@ -81,8 +84,12 @@ async def register_student(
         )
         
     
+    except HTTPException as http_err:
+        
+        raise http_err
+        
     except Exception as err:
         
         import traceback
         tb_str = traceback.format_exc()
-        raise HTTPException(status_code=400, detail=f"Exception while registeing: {str(err)}\n{tb_str}")
+        raise HTTPException(status_code=400, detail=f"Exception while registering: {str(err)}\n{tb_str}")

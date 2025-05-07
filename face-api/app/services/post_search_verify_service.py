@@ -2,11 +2,14 @@ from typing import Union, Dict, Any
 from fastapi import HTTPException, UploadFile
 
 from app.utils.process_image import load_image
-from app.utils.setup import get_chroma_collection
 from app.utils.setup import get_pinecone_index
 from app.utils.verification import verify
 from app.schemas.search_verify_student_schema import VerifyResponse
 
+from deepface.commons.logger import Logger
+
+
+logger = Logger()
 
 async def search_verify_student(
     student_id: str,
@@ -71,6 +74,17 @@ async def search_verify_student(
         )
         
         return VerifyResponse(**student_result)
+   
+    
+    except HTTPException as http_err:
+        
+        raise http_err
+    
+    except ValueError as ve:
+
+        # Handle DeepFace-specific errors (e.g., face detection failure)
+        logger.error(f"ValueError during verification for student {student_id}: {str(ve)}")
+        raise HTTPException(status_code=400, detail=f"Verification failed: {str(ve)}")
         
     
     except Exception as err:

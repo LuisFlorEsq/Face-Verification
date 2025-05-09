@@ -35,6 +35,7 @@ env/
 .env.development
 .env.production
 *.env
+.env-test
 
 # ChromaDB Storage (for face-api)
 face-api/student_embeddings/

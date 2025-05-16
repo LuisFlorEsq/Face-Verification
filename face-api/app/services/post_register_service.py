@@ -3,9 +3,9 @@ from fastapi import HTTPException, UploadFile
 from deepface import DeepFace
 
 from app.utils.process_image import load_image
-from app.utils.setup import get_chroma_collection
 from app.utils.setup import get_pinecone_index
 from app.schemas.register_student_schema import RegisterResponse
+from app.repositories.student_repository import StudentRepository
 
 async def register_student(
     student_id: str,
@@ -32,21 +32,11 @@ async def register_student(
         Dict[str, Any]: Registration status and details.
     """
     
-    # # log_resources("Before register_student")
-    
     try:
         
         # Check if student_id already exists in the database
-        
         index = get_pinecone_index()
-        fetch_response = index.fetch(ids=[student_id])
-        
-        # print(f"[DEBUG]: Fetch response", fetch_response)
-        
-        if fetch_response.vectors and student_id in fetch_response.vectors:
-            
-            raise HTTPException(status_code=400, detail="Student ID already exists.")
-        
+        repository = StudentRepository(index)
         
         # Generate embedding
         image = load_image(img)
@@ -58,26 +48,30 @@ async def register_student(
             enforce_detection=enforce_detection,
             align=align
         )
-        
-        # print(f"[DEBUG]: Embedding object", embedding_obj)
-        # print(f"[DEBUG]: Embedding", embedding_obj[0]["embedding"])
-        
+                
         embedding = embedding_obj[0]["embedding"]
         
-        # Store the embedding in Pinecone
+        # Check if the student ID already exists in the database
+        if repository.student_exists(student_id=student_id):
+            
+            repository.update_student_embedding(
+                student_id=student_id,
+                embedding=embedding
+            )
+            
+            return RegisterResponse(
+                message=f"Student {name} updated successfully.",
+                student_id=student_id
+            )
         
-        index.upsert(
-            vectors=[
-                {
-                    "id": student_id,
-                    "values": embedding,
-                    "metadata": {"student_id": student_id, "name": name}
-                }
-            ]
+        # Save the new student embedding to the database
+        repository.save_student_embedding(
+            student_id=student_id, 
+            embedding=embedding, 
+            name = name
         )
-        
-        # # log_resources("After register_student")
-        
+                
+                
         return RegisterResponse(
             message=f"Student {name} registered successfully.",
             student_id=student_id,

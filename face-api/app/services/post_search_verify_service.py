@@ -5,6 +5,7 @@ from app.utils.process_image import load_image
 from app.utils.setup import get_pinecone_index
 from app.utils.verification import verify
 from app.schemas.search_verify_student_schema import VerifyResponse
+from app.repositories.student_repository import StudentRepository
 
 from deepface.commons.logger import Logger
 
@@ -34,9 +35,7 @@ async def search_verify_student(
     Returns:
         Dict[str, Any]: Verification result including distance and status.
     """
-    
-    # # log_resources("Before search_verify_student")
-    
+        
     try:
         
         # Get reference image and stored embedding
@@ -44,25 +43,17 @@ async def search_verify_student(
         
         # Fetch the stored embedding from the database
         index = get_pinecone_index()
+        repository = StudentRepository(index)
         
-        fetch_response = index.fetch(ids=[student_id])
+        reference_embedding = repository.get_student_embedding(student_id)
         
-        if not fetch_response.vectors or student_id not in fetch_response.vectors:
+
+        # Check if the student ID exists in the database
+        if reference_embedding is None:
+            
             raise HTTPException(status_code=404, detail="Student ID not found.")
         
-        reference_embedding = fetch_response.vectors[student_id]["values"]
-        
-        
-        # print(f"[DEBUG] Search results: {results}")
-        
-        # print(f"[DEBUG] Reference embedding: {reference_embedding}")
-        # print(f"[DEBUG] Format type: {type(reference_embedding)}")
-        
-        
-        # # log_resources("After search_verify_student")
-        
         # Verify both embeddings
-        
         student_result = verify(
             img1_path=reference_embedding,
             img2_path=reference_img,

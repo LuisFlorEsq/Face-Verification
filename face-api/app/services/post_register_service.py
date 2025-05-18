@@ -34,7 +34,7 @@ async def register_student(
     
     try:
         
-        # Check if student_id already exists in the database
+        # Get the student repository
         index = get_pinecone_index()
         repository = StudentRepository(index)
         
@@ -48,7 +48,8 @@ async def register_student(
             enforce_detection=enforce_detection,
             align=align
         )
-                
+        
+        # Obtain the embedding from the overall response
         embedding = embedding_obj[0]["embedding"]
         
         # Check if the student ID already exists in the database

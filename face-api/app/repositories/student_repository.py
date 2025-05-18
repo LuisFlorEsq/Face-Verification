@@ -1,6 +1,4 @@
-
 class StudentRepository:
-    
     
     def __init__(self, pinecone_index):
         self.index = pinecone_index

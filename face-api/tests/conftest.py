@@ -35,3 +35,14 @@ def mock_model():
         mock_model.predict.return_value = np.array([[0.1, 0.2, 0.3]])
         mock.return_value = mock_model
         yield mock
+        
+@pytest.fixture
+def mock_config():
+    """Mock configuration settings"""
+    with patch("app.config.settings.Config") as mock:
+        mock.DEFAULT_MODEL_NAME = "Facenet"
+        mock.DEFAULT_DETECTOR_BACKEND = "fastmtcnn"
+        mock.DEFAULT_DISTANCE_METRIC = "cosine"
+        mock.ENFORCE_DETECTION = True
+        mock.ALIGN_FACES = True
+        yield mock

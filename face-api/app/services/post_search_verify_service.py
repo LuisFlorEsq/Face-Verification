@@ -6,6 +6,7 @@ from app.utils.setup import get_pinecone_index
 from app.utils.verification import verify
 from app.schemas.search_verify_student_schema import VerifyResponse
 from app.repositories.student_repository import StudentRepository
+from app.config.settings import Config
 
 from deepface.commons.logger import Logger
 
@@ -15,11 +16,11 @@ logger = Logger()
 async def search_verify_student(
     student_id: str,
     reference_img: Union[UploadFile, str],
-    model_name: str = "Facenet",
-    detector_backend: str = "ssd",
-    distance_metric: str = "cosine",
-    enforce_detection: bool = True,
-    align: bool = True,
+    model_name: str = Config.DEFAULT_MODEL_NAME,
+    detector_backend: str = Config.DEFAULT_DETECTOR_BACKEND,
+    distance_metric: str = Config.DEFAULT_DISTANCE_METRIC,
+    enforce_detection: bool = Config.ENFORCE_DETECTION,
+    align: bool = Config.ALIGN_FACES,
 ) -> VerifyResponse:
     """
     Search for a student's embedding in the database and verify it against a reference image.

@@ -6,15 +6,16 @@ from app.utils.process_image import load_image
 from app.utils.setup import get_pinecone_index
 from app.schemas.register_student_schema import RegisterResponse
 from app.repositories.student_repository import StudentRepository
+from app.config.settings import Config
 
 async def register_student(
     student_id: str,
     name: str,
     img: Union[UploadFile, str],
-    model_name: str = "Facenet",
-    detector_backend: str = "ssd",
-    enforce_detection: bool = True,
-    align: bool = True
+    model_name: str = Config.DEFAULT_MODEL_NAME,
+    detector_backend: str = Config.DEFAULT_DETECTOR_BACKEND,
+    enforce_detection: bool = Config.ENFORCE_DETECTION,
+    align: bool = Config.ALIGN_FACES
 ) -> RegisterResponse:
     """
     Register a student by storing their face embedding in Pinecone.

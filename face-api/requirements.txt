@@ -16,3 +16,6 @@ torchaudio==2.2.2+cpu
 -f https://download.pytorch.org/whl/torch_stable.html
 psutil
 pinecone
+pytest
+pytest-asyncio
+pytest-cov

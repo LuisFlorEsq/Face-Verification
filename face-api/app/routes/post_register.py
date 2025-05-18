@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 
 from app.schemas.register_student_schema import RegisterResponse
 from app.services.post_register_service import register_student
+from app.config.settings import Config
 
 router = APIRouter(tags=["Register Student"])
 
@@ -12,10 +13,10 @@ async def face_register_student(
     name: str = Form(...),
     img: Optional[UploadFile] = File(None),
     img_path: Optional[str] = Form(None),
-    model_name: str = Form("Facenet"),
-    detector_backend: str = Form("fastmtcnn"),
-    enforce_detection: bool = Form(True),
-    align: bool = Form(True)
+    model_name: str = Form(Config.DEFAULT_MODEL_NAME),
+    detector_backend: str = Form(Config.DEFAULT_DETECTOR_BACKEND),
+    enforce_detection: bool = Form(Config.ENFORCE_DETECTION),
+    align: bool = Form(Config.ALIGN_FACES)
 ):
     if img is None and img_path is None:
         raise HTTPException(status_code=400, detail="Either 'img' or 'img_path' must be provided.")
